@@ -51,6 +51,7 @@ public partial class GameClient : IDisposable {
 	/// <exception cref="NotImplementedException"></exception>
 	public void Dispose() {
 		if (_disposed) return;
+        super.Dispose();
 		tcpClient.Close();
 		_disposed = true;
 	}
