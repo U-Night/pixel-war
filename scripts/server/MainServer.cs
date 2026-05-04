@@ -63,6 +63,7 @@ public partial class MainServer : Node {
 			}
 		} catch (ProtocolViolationException ex) {
 			GD.PrintErr($"[ERROR][MainServer] Handshake failed: {ex.Message}");
+			client.Close();
 		}
 	}
 
