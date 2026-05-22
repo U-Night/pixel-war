@@ -31,6 +31,7 @@ public partial class GameClient : IDisposable {
 			server: WELCOME {id}
 		*/
 		// On envoie PIXELWAR 1.0
+		var handshakeMessage = "PIXELWAR 1.0";
 		await tcpMessageFramer.SendAsync("PIXELWAR 1.0");
 
 		string? clientVersion = await tcpMessageFramer.ReceiveAsync();
@@ -51,7 +52,6 @@ public partial class GameClient : IDisposable {
 	/// <exception cref="NotImplementedException"></exception>
 	public void Dispose() {
 		if (_disposed) return;
-        super.Dispose();
 		tcpClient.Close();
 		_disposed = true;
 	}
@@ -62,7 +62,7 @@ public partial class GameClient : IDisposable {
 	public async Task SendAsync(String message) {
 		Packet packet = new Packet(PacketType.Message, message);
 		byte[] serialized = packet.Serialize();
-		await tcpMessageFramer.SendAsync(serialized.Stringify());
+		await tcpMessageFramer.SendAsync(serialized);
 	}
 
 	/// <summary>

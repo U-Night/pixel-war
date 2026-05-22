@@ -24,9 +24,7 @@ public class TcpMessageFramer {
     /// <summary>
     /// Envoie un message avec son préfixe de longueur (thread-safe)
     /// </summary>
-    public async Task SendAsync(string message, CancellationToken ct = default) {
-        byte[] payload = Encoding.UTF8.GetBytes(message);
-
+    public async Task SendAsync(byte[] payload, CancellationToken ct = default) {
         if (payload.Length > MAX_MESSAGE_SIZE)
             throw new ArgumentException($"Message trop grand : {payload.Length} bytes (max:  {MAX_MESSAGE_SIZE})");
 
