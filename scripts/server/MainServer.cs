@@ -13,8 +13,9 @@ public partial class MainServer : Node {
 	private int counter = 1;
 	private readonly ConcurrentDictionary<string, GameClient> _clients = new();
 
-	public MainServer() {
-		// Par défaut, on écoute sur toutes les interfaces 
+	public MainServer() {}
+	
+	public void StartServer(){
 		GD.Print("[NOTICE][MainServer] Starting Game Server on all interfaces, port 6967");
 		StartAsync(IPAddress.Any, 6967).ContinueWith(task => {
 			if (task.IsFaulted) {

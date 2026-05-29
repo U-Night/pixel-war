@@ -1,10 +1,7 @@
 using Godot;
-using Microsoft.VisualBasic.FileIO;
 using System;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 public class GameClient : IDisposable {
@@ -74,11 +71,11 @@ public class GameClient : IDisposable {
 	/// Reçoit un paquet du client
 	/// </summary>
 	public async Task<Packet?> ReceiveAsync() {
-		String message = await tcpMessageFramer.ReceiveAsync();
+		byte[] message = await tcpMessageFramer.ReceiveAsync();
 		if (message == null) return null;
 		
 		// On reconvertit le texte en octets via UTF-8 pour désérialiser le Packet
-		Packet p = Packet.Deserialize(Encoding.UTF8.GetBytes(message));
+		Packet p = Packet.Deserialize(message);
 		return p;
 	}
 

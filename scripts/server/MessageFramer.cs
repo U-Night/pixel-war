@@ -15,20 +15,20 @@ public class TcpMessageFramer {
 	private readonly SemaphoreSlim _writeLock = new(1, 1); // Pour éviter les écritures entrelacées
 
 	// Taille max d'un message (protection contre les attaques/bugs)
-    private const int MAX_MESSAGE_SIZE = 1024 * 1024; // 1 MB
+	private const int MAX_MESSAGE_SIZE = 1024 * 1024; // 1 MB
 
-    public TcpMessageFramer(NetworkStream stream) {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-    }
+	public TcpMessageFramer(NetworkStream stream) {
+		_stream = stream ?? throw new ArgumentNullException(nameof(stream));
+	}
 
-    /// <summary>
-    /// Envoie un message avec son préfixe de longueur (thread-safe)
-    /// </summary>
-    public async Task SendAsync(byte[] payload, CancellationToken ct = default) {
-        if (payload.Length > MAX_MESSAGE_SIZE)
-            throw new ArgumentException($"Message trop grand : {payload.Length} bytes (max:  {MAX_MESSAGE_SIZE})");
+	/// <summary>
+	/// Envoie un message avec son préfixe de longueur (thread-safe)
+	/// </summary>
+	public async Task SendAsync(byte[] payload, CancellationToken ct = default) {
+		if (payload.Length > MAX_MESSAGE_SIZE)
+			throw new ArgumentException($"Message trop grand : {payload.Length} bytes (max:  {MAX_MESSAGE_SIZE})");
 
-        byte[] lengthPrefix = BitConverter.GetBytes(payload.Length);
+		byte[] lengthPrefix = BitConverter.GetBytes(payload.Length);
 
 		// Lock pour éviter que deux messages s'entrelacent
 		await _writeLock.WaitAsync(ct);
@@ -43,7 +43,7 @@ public class TcpMessageFramer {
 	/// <summary>
 	/// Lit un message complet.  Retourne null si la connexion est fermée. 
 	/// </summary>
-	public async Task<string?> ReceiveAsync(CancellationToken ct = default) {
+	public async Task<byte[]?> ReceiveAsync(CancellationToken ct = default) {
 		// --- ÉTAPE 1 :  Lire les 4 bytes de longueur ---
 		byte[] lengthBuffer = new byte[4];
 		if (!await ReadExactAsync(lengthBuffer, 4, ct))
@@ -60,7 +60,7 @@ public class TcpMessageFramer {
 		if (!await ReadExactAsync(payload, messageLength, ct))
 			return null; // Connexion fermée en plein milieu
 
-		return Encoding.UTF8.GetString(payload);
+		return payload;
 	}
 
 	/// <summary>
@@ -91,5 +91,5 @@ public class TcpMessageFramer {
 /// Exception levée quand le protocole n'est pas respecté
 /// </summary>
 public class ProtocolViolationException : Exception {
-    public ProtocolViolationException(string message) : base(message) { }
+	public ProtocolViolationException(string message) : base(message) { }
 }
