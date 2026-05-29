@@ -15,9 +15,19 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Pixel War"
-config/features=PackedStringArray("4.6", "Forward Plus")
+run/main_scene="uid://4omt5ubkixj7"
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+MainServer="*uid://cnhyqe4bvjeqr"
 
 [dotnet]
 
 project/assembly_name="Pixel War"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=false
