@@ -15,6 +15,7 @@ public enum PacketType : ushort {
 	PlayerLeave = 0x0005,
 
 	Message = 0x0006,
+	Joystick = 0x0007,
 }
 
 /// <summary>
