@@ -19,3 +19,7 @@ mono_crash.*.json
 .vs/
 
 .vscode/
+
+# OSX specific ignores
+.DS_Store
+Thumbs.db
