@@ -58,8 +58,6 @@ public partial class PlayerCharacter : CharacterBody2D  {
 
 		// 2. LECTURE ET LISSAGE DU MOUVEMENT
 		Vector2 targetVelocity = new Vector2(currentDx, currentDy) * Speed;
-		GD.Print($"[DBG] {targetVelocity.X} {targetVelocity.Y}");
-		
 		
 		// Le Lerp sur la vitesse donne de l'inertie au vaisseau (gameplay)
 		Velocity = Velocity.Lerp(targetVelocity, 0.5f);
