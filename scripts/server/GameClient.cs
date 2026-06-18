@@ -11,7 +11,7 @@ public class GameClient : IDisposable {
 	private readonly uint id;
 	private readonly TcpMessageFramer tcpMessageFramer;
 	private bool _disposed; // Pour le Garbage Controller
-	private DateTime lastSeen; // Calculer le ping du client pour savoir s'il est encore vivant
+	public DateTime lastSeen { get; private set; } // Calculer le ping du client pour savoir s'il est encore vivant
 	
 	// Relatif aux coordonnées
 	public volatile uint lastSequenceId = 0;

@@ -13,7 +13,7 @@ public partial class MainServer : Node {
 	private ushort _port;
 	private bool started = true; // enable graceful shutdown
 	private uint counter = 1;
-	private readonly ConcurrentDictionary<uint, GameClient> _clients = new();
+	public readonly ConcurrentDictionary<uint, GameClient> _clients = new();
 
 	public MainServer() {}
 	
