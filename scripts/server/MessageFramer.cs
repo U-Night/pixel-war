@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 /// <summary>
 /// Gère l'envoi et la réception de messages avec préfixe de longueur. 
 /// Pour envoyer un message TCP on l'encapsule:
-/// Protocole :  [4 bytes longueur (little-endian)] + [N bytes payload]
+/// Protocole :  [4 bytes longueur (little-endian)] + [N bytes payload !!! PAQUET (Type Packet sérialisé (soit des Octets))]
+/// Ici on gère le transport des données.
 /// </summary>
 public class TcpMessageFramer {
 	private readonly NetworkStream _stream;
@@ -28,7 +30,8 @@ public class TcpMessageFramer {
 		if (payload.Length > MAX_MESSAGE_SIZE)
 			throw new ArgumentException($"Message trop grand : {payload.Length} bytes (max:  {MAX_MESSAGE_SIZE})");
 
-		byte[] lengthPrefix = BitConverter.GetBytes(payload.Length);
+		byte[] lengthPrefix = new byte[4];
+		BinaryPrimitives.WriteInt32LittleEndian(lengthPrefix, payload.Length);
 
 		// Lock pour éviter que deux messages s'entrelacent
 		await _writeLock.WaitAsync(ct);
@@ -49,8 +52,9 @@ public class TcpMessageFramer {
 		if (!await ReadExactAsync(lengthBuffer, 4, ct))
 			return null; // Connexion fermée proprement
 
-		int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
-
+		// On force la little endianess
+		int messageLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+		
 		// Validation de la taille
 		if (messageLength <= 0 || messageLength > MAX_MESSAGE_SIZE)
 			throw new ProtocolViolationException($"Taille de message invalide : {messageLength}");
