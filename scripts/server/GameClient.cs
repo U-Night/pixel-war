@@ -102,7 +102,6 @@ public class GameClient : IDisposable {
 	}
 
 	public async Task HandleJoystickEvent(uint sequenceId, float x, float y) {
-		GD.Print($"[INFO][GameClient] Joystick event received: SequenceId={sequenceId}, X={x}, Y={y}");
 		if (sequenceId <= lastSequenceId) return; // On discard un sequence id plus récent que ce qu'on a déjà reçu.
 		dx = x;
 		dy = y;

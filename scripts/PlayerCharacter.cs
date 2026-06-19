@@ -20,23 +20,38 @@ public partial class PlayerCharacter : CharacterBody2D  {
 		{TEAMS.RED, "uid://b1uk6jt5yir8w"},
 	};
 
+	private static Dictionary<TEAMS, Vector2> SPAWN_LOC = new() {
+		{ TEAMS.BLUE, new Vector2(384.0f, 100.0f) },
+		{ TEAMS.RED, new Vector2(3760.0f, 100.0f) },
+		{ TEAMS.GREEN, new Vector2(384.0f, 2080.0f) },
+		{ TEAMS.YELLOW, new Vector2(3760.0f, 2080.0f) },
+	};
+
 	private TEAMS team;
 	private uint id;
 	private Sprite2D sprite;
 	private GameClient _gameClient;
 
+	private ArenaGrid _arenaGrid;
 
-	public void Init(GameClient gameClient, TEAMS team) {
+
+	public void Init(GameClient gameClient, TEAMS team, ArenaGrid arenaGrid) {
 		_gameClient = gameClient;
 		this.id = gameClient.GetId();
 		this.team = team;
 		
-		Texture2D charText = ResourceLoader.Load<Texture2D>(TEAMS_SPRITE.GetValueOrDefault(TEAMS.BLUE));
+		Texture2D charText = ResourceLoader.Load<Texture2D>(TEAMS_SPRITE.GetValueOrDefault(team));
+		GD.Print($"[DBG] Chargement de la texture {TEAMS_SPRITE.GetValueOrDefault(team)}, {charText?.ResourceName}");
 		sprite = GetNode<Sprite2D>("CharacterSprite");
 		sprite.Texture = charText;
 		Scale = new Vector2(2.5f, 2.5f);
+
+		Vector2 spawn = SPAWN_LOC.GetValueOrDefault(team);
+
+		GlobalPosition = spawn;
 		
 		GetNode<Label>("UserId").Text = id.ToString();
+		_arenaGrid = arenaGrid;
 	}
 	
 	
@@ -75,8 +90,25 @@ public partial class PlayerCharacter : CharacterBody2D  {
 		if (!_gameClient.IsConnected) {
 			GetParent().RemoveChild(this);
 		}
+
+		// On empêche le joueur de sortir de la carte
+		var mapRect = _arenaGrid.GetUsedRect();
+		var tileSize = _arenaGrid.TileSet.TileSize;
+		var mapLimitsInPixels = new Rect2(mapRect.Position * tileSize, mapRect.Size * tileSize);
+		
+		// On prend en compte la taille du sprite pour ne pas qu'il dépasse
+		if (sprite.Texture != null) {
+			var spriteSize = sprite.Texture.GetSize() * Scale;
+			var halfSpriteSize = spriteSize / 2f;
+
+			var minPos = mapLimitsInPixels.Position + halfSpriteSize;
+			var maxPos = mapLimitsInPixels.End - halfSpriteSize;
+
+			GlobalPosition = GlobalPosition.Clamp(minPos, maxPos);
+		}
 		
 		/// On colorie la map de la couleur de l'équipe
+		_arenaGrid.PaintTile(GlobalPosition, team);
 	}
 	
 }

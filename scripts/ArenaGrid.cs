@@ -2,10 +2,11 @@ using Godot;
 using System;
 
 public partial class ArenaGrid : TileMapLayer {
-    private int baseTileId = 1;
-    private int mapHeight = 34;
+    public int baseTileId { get; private set; } = 1;
+    public int mapHeight { get; private set; } = 34;
 
-    private int mapWidth = 60;
+    public int mapWidth { get; private set; } = 60;
+    
     [Export] public ushort Offset;
 
     // Nos liens directs vers les textes de l'interface
@@ -37,7 +38,7 @@ public partial class ArenaGrid : TileMapLayer {
         UpdateUIScores();
     }
 
-    public void PaintTile(Vector2 globalPosition, PlayerCharacter.TEAMS teamColor) {
+    public void PaintTile(Vector2 globalPosition, PlayerCharacter.TEAMS teamColor) { 
         Vector2I cellPos = LocalToMap(ToLocal(globalPosition));
 
         if (cellPos.X >= Offset && cellPos.X < mapWidth && cellPos.Y >= 0 && cellPos.Y < mapHeight) {

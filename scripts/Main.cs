@@ -12,6 +12,8 @@ public partial class Main : Node2D {
 	private Node BlueTeam;
 	private Node GreenTeam;
 	private Node RedTeam;
+	
+	private ArenaGrid arenaGrid;
 
 	// Called when the node enters the scene tree for the first time.
 	public override async void _Ready() {
@@ -23,6 +25,7 @@ public partial class Main : Node2D {
 		BlueTeam = GetNode<Node>("Teams/Blue");
 		GreenTeam = GetNode<Node>("Teams/Green");
 		RedTeam = GetNode<Node>("Teams/Red");
+		arenaGrid = GetNode<ArenaGrid>("ArenaGrid");
 
 		if (mainServer == null) {
 			GD.PrintErr("[EMERG][MainScene] Aucune instance de MainServer trouvée !!");
@@ -32,9 +35,7 @@ public partial class Main : Node2D {
 		
 		foreach (KeyValuePair<uint, GameClient> cli in mainServer._clients) {
 			PlayerCharacter ply = playerScene.Instantiate<PlayerCharacter>();
-			ply.Init(cli.Value, PlayerCharacter.TEAMS.BLUE);
-
-			ply.GlobalPosition = new(200.0f, 100.0f);
+			ply.Init(cli.Value, (PlayerCharacter.TEAMS) cli.Value.TeamId, arenaGrid);
 			
 			BlueTeam.AddChild(ply);
 		}
