@@ -20,6 +20,7 @@ public enum PacketType : byte {
 	Joystick = 0x07,
 	
 	Disconnect = 0x08,
+	Powerup = 0x09,
 	TeamAssignment=0x10,
 }
 
