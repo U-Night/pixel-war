@@ -18,6 +18,9 @@ public class GameClient : IDisposable {
 	public volatile float dx = 0.0f;
 	public volatile float dy = 0.0f;
 
+	// ✅ Équipe assignée par le serveur (-1 = pas encore assigné)
+	public int TeamId { get; set; } = -1;
+
 	public GameClient(TcpClient tcpClient, uint id) {
 		this.tcpClient = tcpClient;
 		this.RemoteEndPoint = tcpClient.Client.RemoteEndPoint as IPEndPoint;
@@ -75,6 +78,14 @@ public class GameClient : IDisposable {
 		Packet packet = new Packet(PacketType.Message, message);
 		byte[] serialized = packet.Serialize();
 		
+		await tcpMessageFramer.SendAsync(serialized);
+	}
+
+	// ✅ Surcharge avec un PacketType explicite (utilisé pour TeamAssignment)
+	public async Task SendPacketAsync(PacketType type, String message) {
+		Packet packet = new Packet(type, message);
+		byte[] serialized = packet.Serialize();
+
 		await tcpMessageFramer.SendAsync(serialized);
 	}
 	

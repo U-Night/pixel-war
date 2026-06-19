@@ -4,7 +4,16 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
+
+// ✅ Les 4 équipes — les valeurs 0-3 correspondent au résultat du modulo 4
+public enum Team : int {
+	Blue   = 0,
+	Red    = 1,
+	Green  = 2,
+	Yellow = 3
+}
 
 public partial class MainServer : Node {
 	private TcpListener listener;
@@ -14,6 +23,10 @@ public partial class MainServer : Node {
 	private bool started = true; // enable graceful shutdown
 	private uint counter = 1;
 	public readonly ConcurrentDictionary<uint, GameClient> _clients = new();
+
+	// ✅ Compteur pour le round-robin. Interlocked.Increment garantit qu'en cas
+	// de connexions simultanées, deux clients ne reçoivent jamais le même slot.
+	private int _teamCounter = 0;
 
 	public MainServer() {}
 	
@@ -83,9 +96,22 @@ public partial class MainServer : Node {
 				return;
 			}
 
+			// ════════════════════════════════════════════════════════════════
+			// ✅ Assignation de l'équipe en round-robin (thread-safe)
+			// Interlocked.Increment retourne la valeur APRÈS incrément, donc on
+			// soustrait 1 pour que le 1er joueur tombe sur le slot 0 (Blue).
+			// Résultat : Blue → Red → Green → Yellow → Blue → ...
+			// ════════════════════════════════════════════════════════════════
+			Team team = (Team)((Interlocked.Increment(ref _teamCounter) - 1) % 4);
+			gameClient.TeamId = (int)team;
+
+			// On informe immédiatement le client de son équipe
+			// Format : "TEAM_ASSIGNED:{0-3}"  ex: "TEAM_ASSIGNED:0" = Blue
+			await gameClient.SendPacketAsync(PacketType.TeamAssignment, $"TEAM_ASSIGNED:{(int)team}");
+
 			// On stocke les clients 
 			_clients.TryAdd(id, gameClient);
-			GD.Print($"[INFO][MainServer] Un client s'est connecété id: {id}");
+			GD.Print($"[INFO][MainServer] Un client s'est connecété id: {id} → équipe {team}");
 
 			while (gameClient.IsConnected) {
 				Packet? packet = await gameClient.ReceiveAsync();
