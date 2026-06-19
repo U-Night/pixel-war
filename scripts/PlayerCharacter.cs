@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 
 public partial class PlayerCharacter : CharacterBody2D  {
-	public enum TEAMS {
-		GREEN,
-		RED,
-		YELLOW,
-		BLUE
+	public enum TEAMS : int {
+		BLUE   = 0,
+		RED    = 1,
+		GREEN  = 2,
+		YELLOW = 3
 	}
-
+	
 	[Export(PropertyHint.Range, "0,1000,10")]
 	private float Speed = 500.00f;
 
@@ -75,6 +75,8 @@ public partial class PlayerCharacter : CharacterBody2D  {
 		if (!_gameClient.IsConnected) {
 			GetParent().RemoveChild(this);
 		}
+		
+		/// On colorie la map de la couleur de l'équipe
 	}
 	
 }
