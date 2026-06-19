@@ -7,13 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// ✅ Les 4 équipes — les valeurs 0-3 correspondent au résultat du modulo 4
-public enum Team : int {
-	Blue   = 0,
-	Red    = 1,
-	Green  = 2,
-	Yellow = 3
-}
+// ❌ L'enum Team a été retiré d'ici, il vit maintenant dans PlayerCharacter.cs
 
 public partial class MainServer : Node {
 	private TcpListener listener;
@@ -33,14 +27,12 @@ public partial class MainServer : Node {
 	public void StartServer(){
 		GD.Print("[NOTICE][MainServer] Starting Game Server on all interfaces, port 6967");
 		
-		// Démarrage du serveur TCP
 		StartAsync(IPAddress.Any, 6967).ContinueWith(task => {
 			if (task.IsFaulted) {	
 				GD.PrintErr($"[ERROR][MainServer] Failed to start TCP server: {task.Exception}");
 			}
 		});
 
-		// Démarrage du serveur UDP en parallèle (même port)
 		StartUdpServerAsync(IPAddress.Any, 6967).ContinueWith(task => {
 			if (task.IsFaulted) {	
 				GD.PrintErr($"[ERROR][MainServer] Failed to start UDP server: {task.Exception}");
@@ -50,7 +42,6 @@ public partial class MainServer : Node {
 
 	public void StartGameServer(IPAddress addr, ushort port) {
 		GD.Print($"[NOTICE][MainServer] Starting Game UDP Server on {addr}:{port}");
-		
 	}
 
 	private async Task StartAsync(IPAddress addr, ushort port) {
@@ -60,10 +51,9 @@ public partial class MainServer : Node {
 		listener.Start();
 
 		GD.Print($"[NOTICE][MainServer] Started Game Server. Bound to {this._address}:{this._port}");
-		// Gérer la connexion des clients
-		while (started) { // Boucle qui accèpte des nouveaux clients.
+		while (started) {
 			TcpClient _client = await listener.AcceptTcpClientAsync();
-			_ = this.HandleClientAsync(_client, counter++); /// Multiplexage: Ajouter un client et le placer dans un thread
+			_ = this.HandleClientAsync(_client, counter++);
 		}
 	}
 
@@ -72,7 +62,6 @@ public partial class MainServer : Node {
 		GD.Print($"[NOTICE][MainServer] Started Game UDP Server. Bound to {this._address}:{this._port}");
 		while (started) {
 			UdpReceiveResult result = await udpClient.ReceiveAsync();
-			// Traiter le paquet reçu de manière synchrone car très rapide
 			HandleUdpPacket(result);
 		}
 	}
@@ -86,7 +75,7 @@ public partial class MainServer : Node {
 	private async Task HandleClientAsync(TcpClient client, uint id) {
 		GD.Print("[INFO][MainServer] Un client s'est connecté.");
 		GameClient gameClient = new(client, id);
-		// Etape du HandShake (pour l'instant sans TLS)
+
 		try {
 			bool isSuccessful = await gameClient.PerformHandshake();
 
@@ -97,19 +86,15 @@ public partial class MainServer : Node {
 			}
 
 			// ════════════════════════════════════════════════════════════════
-			// ✅ Assignation de l'équipe en round-robin (thread-safe)
-			// Interlocked.Increment retourne la valeur APRÈS incrément, donc on
-			// soustrait 1 pour que le 1er joueur tombe sur le slot 0 (Blue).
-			// Résultat : Blue → Red → Green → Yellow → Blue → ...
+			// ✅ MODIFIÉ : on utilise PlayerCharacter.TEAMS au lieu de l'ancien Team
 			// ════════════════════════════════════════════════════════════════
-			Team team = (Team)((Interlocked.Increment(ref _teamCounter) - 1) % 4);
+			PlayerCharacter.TEAMS team = (PlayerCharacter.TEAMS)((Interlocked.Increment(ref _teamCounter) - 1) % 4);
 			gameClient.TeamId = (int)team;
 
-			// On informe immédiatement le client de son équipe
-			// Format : "TEAM_ASSIGNED:{0-3}"  ex: "TEAM_ASSIGNED:0" = Blue
+			// Format : "TEAM_ASSIGNED:{0-3}"  ex: "TEAM_ASSIGNED:0" = BLUE
 			await gameClient.SendPacketAsync(PacketType.TeamAssignment, $"TEAM_ASSIGNED:{(int)team}");
+			// ════════════════════════════════════════════════════════════════
 
-			// On stocke les clients 
 			_clients.TryAdd(id, gameClient);
 			GD.Print($"[INFO][MainServer] Un client s'est connecété id: {id} → équipe {team}");
 
@@ -126,7 +111,6 @@ public partial class MainServer : Node {
 	}
 
 	private async Task HandlePacketAsync(GameClient sender, Packet packet) {
-		
 		switch (packet.Type) {
 			case PacketType.Disconnect:
 				sender.Dispose();
@@ -142,57 +126,44 @@ public partial class MainServer : Node {
 	private void HandleUdpPacket(UdpReceiveResult result) {
 		byte[] buffer = result.Buffer;
 
-		// 1. Taille minimale (c'est la taille de notre Header)
 		int headerSize = Marshal.SizeOf<UdpPacket.PacketHeader>();
-		if (buffer.Length < headerSize) return; // Discard (Paquet trop petit)
-		
+		if (buffer.Length < headerSize) return;
 
 		ReadOnlySpan<byte> span = buffer;
 		ReadOnlySpan<byte> headerSpan = span.Slice(0, headerSize);
 
-		// 2. Décoder le header SANS allocation de mémoire
 		UdpPacket.PacketHeader header = MemoryMarshal.Read<UdpPacket.PacketHeader>(headerSpan);
 
-		// --- VERIFICATION DU CRC32 ---
-		// On calcule le CRC sur l'intégralité du paquet, en excluant les 4 premiers octets (qui contiennent le CRC lui-même)
 		ReadOnlySpan<byte> dataForCrc = span.Slice(4);
 		uint calculatedCrc = ComputeCrc32(dataForCrc);
 		if (header.Crc32 != calculatedCrc) {
 			GD.PrintErr("CRC Mismatch! Paquet corrompu ou falsifié.");
-			return; // Discard
+			return;
 		}
-		// -----------------------------
 
-		// 3. Vérifier le UserId pour voir si c'est un joueur connu
 		if (!_clients.TryGetValue(header.UserId, out GameClient client)) {
-			// Joueur inconnu ou non connecté
 			GD.PrintErr($"[ERROR][MainServer] Received UDP packet from unknown UserId: {header.UserId}");
 			return; 
 		}
 
-		// Vérifier que l'IP de provenance UDP correspond bien à l'IP du socket TCP du client !
 		if (!result.RemoteEndPoint.Address.MapToIPv4().Equals(client.RemoteEndPoint.Address)) return;
 
-		// 4. Traiter la payload en fonction du type
 		switch (header.PacketType) {
 			case UdpPacket.PacketType.Joystick:
 				int payloadSize = Marshal.SizeOf<UdpPacket.PlayerInputPayload>();
-				if (buffer.Length < headerSize + payloadSize) return; // Données corrompues/manquantes
+				if (buffer.Length < headerSize + payloadSize) return;
 
-                ReadOnlySpan<byte> payloadSpan = span.Slice(headerSize, payloadSize);
+				ReadOnlySpan<byte> payloadSpan = span.Slice(headerSize, payloadSize);
 				UdpPacket.PlayerInputPayload payload = MemoryMarshal.Read<UdpPacket.PlayerInputPayload>(payloadSpan);
 
-				// Traitement des inputs (Exemple: stocker les données dans GameClient)
 				client.HandleJoystickEvent(header.SequenceId, payload.X, payload.Y);
 				break;
 			case UdpPacket.PacketType.Ping:
-				
-				client.Ping(); // Mettre à jour le dernier ping reçu
+				client.Ping();
 				break;
 		}
 	}
 
-	// Implémentation super rapide et standalone du Crc32 (sans package externe)
 	private static readonly uint[] Crc32Table = GenerateCrc32Table();
 	private static uint[] GenerateCrc32Table() {
 		var table = new uint[256];
