@@ -61,7 +61,7 @@ public partial class Main : Node2D {
 
 		Label timerLabel = new Label();
 		timerLabel.Text = "5:00";
-		timerLabel.AddThemeFontSizeOverride("font_size", 72);
+		timerLabel.AddThemeFontSizeOverride("font_size", 56);
 		timerLabel.AddThemeColorOverride("font_color", Colors.White);
 		timerLabel.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.7f));
 		timerLabel.AddThemeConstantOverride("shadow_offset_x", 3);
@@ -69,14 +69,13 @@ public partial class Main : Node2D {
 		timerLabel.HorizontalAlignment = HorizontalAlignment.Center;
 		timerLabel.VerticalAlignment = VerticalAlignment.Center;
 
-		// Ancre en bas à gauche : occupe une zone fixe de 200x80 px
 		timerLabel.AnchorLeft = 0f;
 		timerLabel.AnchorTop = 1f;
 		timerLabel.AnchorRight = 0f;
 		timerLabel.AnchorBottom = 1f;
-		timerLabel.OffsetLeft = 10;
+		timerLabel.OffsetLeft = 0;
 		timerLabel.OffsetTop = -110;
-		timerLabel.OffsetRight = 200;
+		timerLabel.OffsetRight = 160;
 		timerLabel.OffsetBottom = -20;
 
 		timerContainer.AddChild(timerLabel);
