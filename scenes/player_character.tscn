@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://dsjfnu0hlw33b"]
+
+[ext_resource type="Script" uid="uid://c3pyufnndmjco" path="res://scripts/PlayerCharacter.cs" id="1_6r27q"]
+[ext_resource type="Texture2D" uid="uid://cex2sjl5evbdq" path="res://assets/sprites/vaisseau_bleu.png" id="2_kww55"]
+
+[node name="PlayerCharacter" type="CharacterBody2D" unique_id=553378021]
+motion_mode = 1
+script = ExtResource("1_6r27q")
+
+[node name="CharacterSprite" type="Sprite2D" parent="." unique_id=1966355179]
+texture = ExtResource("2_kww55")
+
+[node name="UserId" type="Label" parent="." unique_id=1419420078]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -37.0
+offset_right = 20.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "ID"
+horizontal_alignment = 1
+vertical_alignment = 1

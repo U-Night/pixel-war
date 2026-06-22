@@ -11,12 +11,18 @@ public class GameClient : IDisposable {
 	private readonly uint id;
 	private readonly TcpMessageFramer tcpMessageFramer;
 	private bool _disposed; // Pour le Garbage Controller
-	private DateTime lastSeen; // Calculer le ping du client pour savoir s'il est encore vivant
+	public DateTime lastSeen { get; private set; } // Calculer le ping du client pour savoir s'il est encore vivant
 	
 	// Relatif aux coordonnées
 	public volatile uint lastSequenceId = 0;
 	public volatile float dx = 0.0f;
 	public volatile float dy = 0.0f;
+
+	// Équipe assignée par le serveur (-1 = pas encore assigné)
+	public int TeamId { get; set; } = -1;
+
+	// Flag d'élimination
+	public bool IsEliminated { get; set; } = false;
 
 	public GameClient(TcpClient tcpClient, uint id) {
 		this.tcpClient = tcpClient;
@@ -77,6 +83,14 @@ public class GameClient : IDisposable {
 		
 		await tcpMessageFramer.SendAsync(serialized);
 	}
+
+	// ✅ Surcharge avec un PacketType explicite (utilisé pour TeamAssignment)
+	public async Task SendPacketAsync(PacketType type, String message) {
+		Packet packet = new Packet(type, message);
+		byte[] serialized = packet.Serialize();
+
+		await tcpMessageFramer.SendAsync(serialized);
+	}
 	
 	/// <summary>
 	/// Reçoit un paquet du client
@@ -91,7 +105,6 @@ public class GameClient : IDisposable {
 	}
 
 	public async Task HandleJoystickEvent(uint sequenceId, float x, float y) {
-		GD.Print($"[INFO][GameClient] Joystick event received: SequenceId={sequenceId}, X={x}, Y={y}");
 		if (sequenceId <= lastSequenceId) return; // On discard un sequence id plus récent que ce qu'on a déjà reçu.
 		dx = x;
 		dy = y;
