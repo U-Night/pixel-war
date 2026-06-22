@@ -18,8 +18,11 @@ public class GameClient : IDisposable {
 	public volatile float dx = 0.0f;
 	public volatile float dy = 0.0f;
 
-	// ✅ Équipe assignée par le serveur (-1 = pas encore assigné)
+	// Équipe assignée par le serveur (-1 = pas encore assigné)
 	public int TeamId { get; set; } = -1;
+
+	// Flag d'élimination
+	public bool IsEliminated { get; set; } = false;
 
 	public GameClient(TcpClient tcpClient, uint id) {
 		this.tcpClient = tcpClient;
