@@ -89,6 +89,13 @@ public partial class PlayerCharacter : CharacterBody2D  {
 
 		if (!_gameClient.IsConnected) {
 			GetParent().RemoveChild(this);
+			QueueFree();
+			return;
+		}
+
+		if (_gameClient.IsEliminated) {
+			QueueFree();
+			return;
 		}
 
 		// On empêche le joueur de sortir de la carte
