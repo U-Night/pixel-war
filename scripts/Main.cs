@@ -64,7 +64,7 @@ public partial class Main : Node2D {
 		FontFile dsegFont = GD.Load<FontFile>("res://assets/fonts/DSEG7Classic-Regular.ttf");
 		timerLabel.AddThemeFontOverride("font", dsegFont);
 		timerLabel.AddThemeFontSizeOverride("font_size", 56);
-		timerLabel.AddThemeColorOverride("font_color", Colors.White);
+		timerLabel.AddThemeColorOverride("font_color", Color.Color8(237, 190, 104, 255));
 		timerLabel.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.7f));
 		timerLabel.AddThemeConstantOverride("shadow_offset_x", 3);
 		timerLabel.AddThemeConstantOverride("shadow_offset_y", 3);

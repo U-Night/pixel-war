@@ -21,10 +21,17 @@ public partial class MainServer : Node {
 	// ✅ Compteur pour le round-robin. Interlocked.Increment garantit qu'en cas
 	// de connexions simultanées, deux clients ne reçoivent jamais le même slot.
 	private int _teamCounter = 0;
+	private bool _isServerRunning = false;
 
 	public MainServer() {}
 	
 	public void StartServer(){
+		if (_isServerRunning) {
+			GD.Print("[NOTICE][MainServer] Server is already running. Ignoring start request.");
+			return;
+		}
+		
+		_isServerRunning = true;
 		GD.Print("[NOTICE][MainServer] Starting Game Server on all interfaces, port 6967");
 		
 		StartAsync(IPAddress.Any, 6967).ContinueWith(task => {
@@ -188,5 +195,18 @@ public partial class MainServer : Node {
 			crc = (crc >> 8) ^ Crc32Table[index];
 		}
 		return ~crc;
+	}
+
+	public void ResetServer() {
+		// Déconnecter tous les clients
+		foreach (var client in _clients.Values) {
+			client.Dispose();
+		}
+		_clients.Clear();
+		
+		// Remettre le compteur d'équipes à 0
+		Interlocked.Exchange(ref _teamCounter, 0);
+		
+		GD.Print("[INFO][MainServer] Le serveur a été réinitialisé.");
 	}
 }

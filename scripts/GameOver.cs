@@ -101,6 +101,55 @@ public partial class GameOver : Control {
             
             grid.AddChild(CreateLabel($"{_arenaGrid.cumulativePaintedTiles[i]}", false));
         }
+
+        // ═══ Boutons d'action ═══
+        HBoxContainer buttonBox = new HBoxContainer();
+        buttonBox.AddThemeConstantOverride("separation", 50);
+        buttonBox.Alignment = BoxContainer.AlignmentMode.Center;
+        
+        // Un margin top pour séparer de la grille
+        MarginContainer marginBox = new MarginContainer();
+        marginBox.AddThemeConstantOverride("margin_top", 60);
+        marginBox.AddChild(buttonBox);
+        vbox.AddChild(marginBox);
+
+        Button restartBtn = new Button();
+        restartBtn.Text = "Relancer une partie";
+        restartBtn.AddThemeFontSizeOverride("font_size", 40);
+        restartBtn.Pressed += OnRestartPressed;
+        buttonBox.AddChild(restartBtn);
+
+        Button menuBtn = new Button();
+        menuBtn.Text = "Menu Principal";
+        menuBtn.AddThemeFontSizeOverride("font_size", 40);
+        menuBtn.Pressed += OnMainMenuPressed;
+        buttonBox.AddChild(menuBtn);
+
+        Button quitBtn = new Button();
+        quitBtn.Text = "Quitter";
+        quitBtn.AddThemeFontSizeOverride("font_size", 40);
+        quitBtn.Pressed += OnQuitPressed;
+        buttonBox.AddChild(quitBtn);
+    }
+
+    private void OnRestartPressed() {
+        MainServer mainServer = GetNodeOrNull<MainServer>("/root/MainServer");
+        if (mainServer != null) {
+            mainServer.ResetServer();
+        }
+        GetTree().ChangeSceneToFile("res://scenes/waiting_room.tscn");
+    }
+
+    private void OnMainMenuPressed() {
+        MainServer mainServer = GetNodeOrNull<MainServer>("/root/MainServer");
+        if (mainServer != null) {
+            mainServer.ResetServer();
+        }
+        GetTree().ChangeSceneToFile("res://scenes/mainMenu.tscn");
+    }
+
+    private void OnQuitPressed() {
+        GetTree().Quit();
     }
 
     private Label CreateLabel(string text, bool isHeader, Color? color = null) {
