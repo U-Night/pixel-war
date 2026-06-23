@@ -14,6 +14,24 @@ public partial class GameManager : Node {
     private bool _elimination2Done = false;
     private bool _gameEnded = false;
 
+    // ------------------------------------------------------------------------------------------------
+    // CONFIGURATION DES POWERUPS
+    // ------------------------------------------------------------------------------------------------
+    [Export] public bool EnableSwordPowerup = false;         // Activer ou désactiver l'épée
+    [Export] public float PowerupSpawnInterval = 20.0f;      // Temps en secondes entre chaque apparition d'un bonus
+    [Export] public int PowerupsPerSpawn = 1;                // Nombre de bonus apparaissant en même temps
+    [Export] public int MaxActivePowerups = 5;               // Nombre maximum de bonus autorisés simultanément sur la carte
+    
+    private List<ActivePowerup> _activePowerups = new();
+    private double _powerupSpawnTimer = 0.0;
+    private Random _random = new Random();
+
+    // Classe interne pour stocker les informations du bonus affiché sur la carte
+    private class ActivePowerup {
+        public Sprite2D Node;
+        public PowerupType Type;
+    }
+
     public void Init(MainServer mainServer, ArenaGrid arenaGrid, Label timerLabel) {
         _mainServer = mainServer;
         _arenaGrid = arenaGrid;
@@ -36,6 +54,90 @@ public partial class GameManager : Node {
             _gameEnded = true;
             UpdateTimerUI(0); // Force 00:00
             EndGame();
+        }
+
+        // ------------------------------------------------------------------------------------------------
+        // GESTION DE L'APPARITION ET DU RAMASSAGE DES POWERUPS
+        // ------------------------------------------------------------------------------------------------
+        _powerupSpawnTimer += delta;
+        if (_powerupSpawnTimer >= PowerupSpawnInterval) { 
+            _powerupSpawnTimer = 0.0;
+            // On génère la quantité demandée, tant qu'on ne dépasse pas la limite maximale sur la carte
+            for (int i = 0; i < PowerupsPerSpawn; i++) {
+                if (_activePowerups.Count < MaxActivePowerups) {
+                    SpawnRandomPowerup();
+                }
+            }
+        }
+        
+        CheckPowerupCollisions();
+    }
+
+    private void SpawnRandomPowerup() {
+        if (_arenaGrid == null) return;
+        
+        int x = _random.Next(_arenaGrid.Offset, _arenaGrid.mapWidth);
+        int y = _random.Next(0, _arenaGrid.mapHeight);
+        var tileSize = _arenaGrid.TileSet.TileSize;
+        Vector2 spawnPos = new Vector2(x * tileSize.X + tileSize.X / 2f, y * tileSize.Y + tileSize.Y / 2f);
+        
+        List<PowerupType> available = new List<PowerupType> { PowerupType.Grow, PowerupType.Speed, PowerupType.PaintBomb };
+        if (EnableSwordPowerup) available.Add(PowerupType.Sword);
+        
+        PowerupType selected = available[_random.Next(available.Count)];
+        
+        Sprite2D sprite = new Sprite2D();
+        string texPath = selected switch {
+            PowerupType.Grow => "res://assets/sprites/powerup_grow.svg",
+            PowerupType.Speed => "res://assets/sprites/powerup_speed.svg",
+            PowerupType.PaintBomb => "res://assets/sprites/powerup_paint_bomb.svg",
+            PowerupType.Sword => "res://assets/sprites/powerup_sword.svg",
+            _ => ""
+        };
+        sprite.Texture = GD.Load<Texture2D>(texPath);
+        sprite.GlobalPosition = spawnPos;
+        
+        // On augmente la taille visuelle de l'icône (1.5x) pour qu'elle soit bien visible sur la carte
+        sprite.Scale = new Vector2(1.5f, 1.5f);
+        
+        GetTree().CurrentScene.AddChild(sprite);
+        
+        _activePowerups.Add(new ActivePowerup { Node = sprite, Type = selected });
+    }
+    
+    private void CheckPowerupCollisions() {
+        var players = GetTree().GetNodesInGroup("Players");
+        
+        for (int i = _activePowerups.Count - 1; i >= 0; i--) {
+            var powerup = _activePowerups[i];
+            foreach (Node pNode in players) {
+                if (pNode is PlayerCharacter player) {
+                    // On vérifie la distance. 50 pixels représente environ une seule case (64x64).
+                    // Cela garantit que la hitbox reste précise et cantonnée à une case malgré la grande icône.
+                    if (player.GlobalPosition.DistanceTo(powerup.Node.GlobalPosition) < 50.0f) {
+                        CollectPowerup(player, powerup);
+                        _activePowerups.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    private async void CollectPowerup(PlayerCharacter player, ActivePowerup powerup) {
+        powerup.Node.QueueFree();
+        
+        string typeStr = powerup.Type switch {
+            PowerupType.Grow => "grow",
+            PowerupType.Speed => "speed",
+            PowerupType.PaintBomb => "paint_bomb",
+            PowerupType.Sword => "sword",
+            _ => "unknown"
+        };
+        
+        if (player.GameClient != null && player.GameClient.HeldPowerup == PowerupType.None) {
+            player.GameClient.HeldPowerup = powerup.Type;
+            await player.GameClient.SendPacketAsync(PacketType.Powerup, $"{{\"action\":\"grant\",\"powerup\":\"{typeStr}\"}}");
         }
     }
 

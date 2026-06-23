@@ -123,6 +123,12 @@ public partial class MainServer : Node {
 				sender.Dispose();
 				GD.Print($"[INFO][MainServer] Le client {sender.GetId()} s'est déconnecté");
 				break;
+			case PacketType.Powerup:
+				string data = packet.GetDataAsString();
+				if (data.Contains("\"use\"") || data.Contains("\"action\":\"use\"") || data.Contains("\"action\": \"use\"")) {
+					await sender.ActivatePowerup();
+				}
+				break;
 			default:
 				GD.Print("[INFO][MainServer] Paquet non géré reçu : ", packet);
 				GD.Print($"[INFO][MainServer] {{{sender.GetId()}}} {packet.GetDataAsString()}");
