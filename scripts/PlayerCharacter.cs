@@ -13,6 +13,11 @@ public partial class PlayerCharacter : CharacterBody2D  {
 	[Export(PropertyHint.Range, "0,1000,10")]
 	private float Speed = 500.00f;
 
+	[Export]
+	public float PingCooldown = 5.0f;
+	
+	private DateTime _lastPingTime = DateTime.MinValue;
+
 	private static Dictionary<TEAMS, string> TEAMS_SPRITE = new() {
 		{TEAMS.BLUE, "uid://cex2sjl5evbdq"},
 		{TEAMS.GREEN, "uid://buvb5n1xwc22s"},
@@ -64,6 +69,14 @@ public partial class PlayerCharacter : CharacterBody2D  {
 		
 		float currentDx = GameClient.dx;
 		float currentDy = GameClient.dy;
+
+		if (GameClient.WantsPing) {
+			GameClient.WantsPing = false;
+			if ((DateTime.Now - _lastPingTime).TotalSeconds >= PingCooldown) {
+				_lastPingTime = DateTime.Now;
+				TriggerPingVisuals();
+			}
+		}
 
 		// Disable active powerup if expired (except PaintBomb which is instant)
 		if (GameClient.ActivePowerup != PowerupType.None && GameClient.ActivePowerup != PowerupType.PaintBomb && DateTime.Now >= GameClient.PowerupEndTime) {
@@ -179,6 +192,47 @@ public partial class PlayerCharacter : CharacterBody2D  {
 				_arenaGrid.PaintTile(GlobalPosition + new Vector2(x * tileSizeVec.X, y * tileSizeVec.Y), team);
 			}
 		}
+	}
+	
+	private void TriggerPingVisuals() {
+		// Halo de lumière très visible (grand cercle jaune)
+		Panel halo = new Panel();
+		StyleBoxFlat style = new StyleBoxFlat();
+		style.BgColor = new Color(1.0f, 1.0f, 0.0f, 0.8f); // Jaune vif transparent
+		style.CornerRadiusTopLeft = 500;
+		style.CornerRadiusTopRight = 500;
+		style.CornerRadiusBottomLeft = 500;
+		style.CornerRadiusBottomRight = 500;
+		halo.AddThemeStyleboxOverride("panel", style);
+		
+		halo.Size = new Vector2(50, 50);
+		halo.Position = new Vector2(-25, -25);
+		halo.MouseFilter = Control.MouseFilterEnum.Ignore;
+		halo.ShowBehindParent = true; // Derrière le vaisseau, au dessus de la carte
+		
+		AddChild(halo);
+		
+		Label label = GetNode<Label>("UserId");
+		label.Modulate = Colors.Yellow;
+		label.PivotOffset = label.Size / 2; // Pour que l'agrandissement se fasse depuis le centre
+		Vector2 originalLabelScale = new Vector2(1.0f, 1.0f);
+
+		Tween tween = CreateTween();
+		tween.SetParallel(true);
+		
+		// Agrandir le panel
+		tween.TweenProperty(halo, "size", new Vector2(150, 150), 1.0f).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+		tween.TweenProperty(halo, "position", new Vector2(-75, -75), 1.0f).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+		tween.TweenProperty(halo, "modulate", new Color(1.0f, 1.0f, 0.0f, 0.0f), 1.0f).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+		
+		// Petit bond du texte
+		tween.TweenProperty(label, "scale", originalLabelScale * 1.6f, 0.3f).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+		
+		Tween labelTween = CreateTween();
+		labelTween.TweenProperty(label, "modulate", Colors.White, 0.3f).SetDelay(1.0f);
+		labelTween.Parallel().TweenProperty(label, "scale", originalLabelScale, 0.3f).SetDelay(1.0f);
+		
+		tween.Chain().TweenCallback(Callable.From(halo.QueueFree));
 	}
 	
 }
