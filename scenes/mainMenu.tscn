@@ -8,6 +8,7 @@
 [ext_resource type="StyleBox" uid="uid://dnvndbeqgmcmp" path="res://assets/styles/button_pressed.tres" id="5_y35fp"]
 [ext_resource type="StyleBox" uid="uid://xnn66g8h78rf" path="res://assets/styles/button_hovered.tres" id="6_dj72i"]
 [ext_resource type="Texture2D" uid="uid://btobnf57t3kbe" path="res://assets/icons/leave.svg" id="6_ldpc3"]
+[ext_resource type="FontFile" uid="uid://c5w4bmxvtvajr" path="res://assets/fonts/Inter-VariableFont_opsz,wght.ttf" id="9_dj72i"]
 
 [sub_resource type="Image" id="Image_qkhwq"]
 data = {
@@ -572,6 +573,9 @@ cache/0/50/0/glyphs/578/texture_idx = 0
 [sub_resource type="Theme" id="Theme_dj72i"]
 /fonts/buttonFonts = SubResource("FontFile_fy3ry")
 
+[sub_resource type="LabelSettings" id="LabelSettings_6b2wv"]
+font = ExtResource("9_dj72i")
+
 [node name="MainMenu" type="Control" unique_id=777344205]
 layout_mode = 3
 anchors_preset = 15
@@ -652,6 +656,24 @@ text = "QUITTER LE JEU"
 icon = ExtResource("6_ldpc3")
 alignment = 0
 expand_icon = true
+
+[node name="VersionLabel" type="Label" parent="." unique_id=866772356]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -197.0
+offset_top = -31.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Version: 1.2.3 (build 123)"
+label_settings = SubResource("LabelSettings_6b2wv")
+horizontal_alignment = 2
+vertical_alignment = 2
 
 [connection signal="pressed" from="GridContainer/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="GridContainer/Button" to="." method="_on_close_button_pressed"]

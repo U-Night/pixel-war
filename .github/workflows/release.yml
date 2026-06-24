@@ -1,0 +1,159 @@
+name: 🎮 Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  GODOT_VERSION: "4.6.2"
+  EXPORT_NAME: "Pixel War"
+
+jobs:
+  build:
+    name: 🔨 Build – ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: "Windows Desktop amd64"
+            artifact_name: pixel-war-windows-x64
+            export_path: build/windows/Pixel War.exe
+          - preset: "macOS"
+            artifact_name: pixel-war-macos
+            export_path: build/macos/Pixel War.zip
+          - preset: "Linux amd64"
+            artifact_name: pixel-war-linux-x64
+            export_path: build/linux/Pixel War.x86_64
+
+    container:
+      image: barichello/godot-ci:mono-4.6.2
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      # ──────────────────────────────────────────────
+      # Inject version & build number into project.godot
+      # ──────────────────────────────────────────────
+      - name: 🏷️ Inject version metadata
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # Strip leading 'v' to get a clean semver (e.g. v1.2.3 → 1.2.3)
+          GAME_VERSION="${TAG#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+
+          echo "Game version: ${GAME_VERSION}"
+          echo "Build number: ${BUILD_NUMBER}"
+
+          # Update project.godot settings
+          sed -i "s|config/version=\".*\"|config/version=\"${GAME_VERSION}\"|" project.godot
+          sed -i "s|config/build_number=\".*\"|config/build_number=\"${BUILD_NUMBER}\"|" project.godot
+
+          echo "--- project.godot (application section) ---"
+          grep -A5 '\[application\]' project.godot
+
+      # ──────────────────────────────────────────────
+      # Setup export templates & .NET
+      # ──────────────────────────────────────────────
+      - name: 📦 Setup export templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/* \
+             ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/ 2>/dev/null || true
+
+      - name: 🔧 Setup .NET project
+        run: |
+          mkdir -p build/windows build/macos build/linux
+          # Let Godot import resources & build C# solution
+          timeout 120 godot --headless --import 2>&1 || true
+
+      # ──────────────────────────────────────────────
+      # Export the game
+      # ──────────────────────────────────────────────
+      - name: 🚀 Export – ${{ matrix.preset }}
+        run: |
+          godot --headless --export-release "${{ matrix.preset }}" "${{ matrix.export_path }}"
+
+      # ──────────────────────────────────────────────
+      # Package into ZIP for release
+      # ──────────────────────────────────────────────
+      - name: 📦 Package artifact
+        run: |
+          EXPORT_DIR=$(dirname "${{ matrix.export_path }}")
+          cd "${EXPORT_DIR}"
+          zip -r "${GITHUB_WORKSPACE}/${{ matrix.artifact_name }}.zip" .
+
+      - name: ⬆️ Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+          retention-days: 5
+
+  # ════════════════════════════════════════════════════
+  # Create GitHub Release
+  # ════════════════════════════════════════════════════
+  release:
+    name: 📦 Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout (for commit history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⬇️ Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 📝 Generate release notes
+        id: release_notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          # Find the previous tag
+          PREV_TAG=$(git tag --sort=-creatordate | grep -A1 "^${TAG}$" | tail -n1)
+
+          if [ "${PREV_TAG}" = "${TAG}" ] || [ -z "${PREV_TAG}" ]; then
+            # First tag — list all commits
+            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" ${TAG})
+          else
+            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" "${PREV_TAG}..${TAG}")
+          fi
+
+          # Write multi-line notes to file
+          cat > release_notes.md <<EOF
+          ## 🎮 Pixel War ${TAG}
+
+          **Build:** #${{ github.run_number }}
+
+          ### 📋 Release notes
+
+          ${COMMITS}
+          EOF
+
+          echo "Generated release notes:"
+          cat release_notes.md
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "🎮 Pixel War ${{ github.ref_name }}"
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            artifacts/pixel-war-windows-x64/*.zip
+            artifacts/pixel-war-macos/*.zip
+            artifacts/pixel-war-linux-x64/*.zip
