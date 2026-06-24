@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Lame -->
+  <polygon points="32,4 36,8 36,36 32,40 28,36 28,8" fill="white"/>
+  <!-- Pointe -->
+  <polygon points="28,8 32,2 36,8" fill="white"/>
+  <!-- Garde -->
+  <rect x="20" y="38" width="24" height="5" rx="2" fill="white"/>
+  <!-- Poignée -->
+  <rect x="29" y="43" width="6" height="14" rx="2" fill="white" opacity="0.85"/>
+  <!-- Pommeau -->
+  <ellipse cx="32" cy="59" rx="5" ry="3" fill="white"/>
+</svg>

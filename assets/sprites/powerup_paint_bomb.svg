@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Corps de la bombe -->
+  <circle cx="32" cy="36" r="18" fill="white"/>
+  <!-- Mèche -->
+  <path d="M38 20 Q42 12 46 14" stroke="white" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <!-- Étincelle -->
+  <circle cx="47" cy="13" r="3.5" fill="white" opacity="0.9"/>
+  <circle cx="50" cy="9" r="2" fill="white" opacity="0.6"/>
+  <!-- Éclaboussures de peinture -->
+  <circle cx="12" cy="42" r="6" fill="white" opacity="0.6"/>
+  <circle cx="52" cy="50" r="5" fill="white" opacity="0.5"/>
+  <circle cx="22" cy="58" r="4" fill="white" opacity="0.5"/>
+  <circle cx="46" cy="26" r="3" fill="white" opacity="0.4"/>
+</svg>

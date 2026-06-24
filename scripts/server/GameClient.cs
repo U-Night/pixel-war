@@ -5,6 +5,14 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
+public enum PowerupType {
+	None,
+	PaintBomb,
+	Grow,
+	Sword,
+	Speed
+}
+
 public class GameClient : IDisposable {
 	private readonly TcpClient tcpClient;
 	public IPEndPoint RemoteEndPoint { get; private set; }
@@ -23,6 +31,11 @@ public class GameClient : IDisposable {
 
 	// Flag d'élimination
 	public bool IsEliminated { get; set; } = false;
+
+	// Powerups
+	public PowerupType HeldPowerup { get; set; } = PowerupType.None;
+	public PowerupType ActivePowerup { get; set; } = PowerupType.None;
+	public DateTime PowerupEndTime { get; set; }
 
 	public GameClient(TcpClient tcpClient, uint id) {
 		this.tcpClient = tcpClient;
@@ -115,5 +128,12 @@ public class GameClient : IDisposable {
 		lastSeen = DateTime.Now;
 	}
 
+	public async Task ActivatePowerup() {
+		if (HeldPowerup == PowerupType.None) return;
+		ActivePowerup = HeldPowerup;
+		HeldPowerup = PowerupType.None;
+		PowerupEndTime = DateTime.Now.AddSeconds(5);
+		await SendPacketAsync(PacketType.Powerup, "{\"action\":\"used\"}");
+	}
 
 }

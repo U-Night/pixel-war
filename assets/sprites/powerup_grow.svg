@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Centre -->
+  <circle cx="32" cy="32" r="7" fill="white"/>
+  <!-- Flèche haut-gauche -->
+  <path d="M22 10 L10 10 L10 22" stroke="white" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="10" y1="10" x2="24" y2="24" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Flèche haut-droite -->
+  <path d="M42 10 L54 10 L54 22" stroke="white" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="54" y1="10" x2="40" y2="24" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Flèche bas-gauche -->
+  <path d="M22 54 L10 54 L10 42" stroke="white" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="10" y1="54" x2="24" y2="40" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Flèche bas-droite -->
+  <path d="M42 54 L54 54 L54 42" stroke="white" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="54" y1="54" x2="40" y2="40" stroke="white" stroke-width="4" stroke-linecap="round"/>
+</svg>
