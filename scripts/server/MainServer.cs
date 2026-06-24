@@ -221,6 +221,9 @@ public partial class MainServer : Node {
 		// Remettre le compteur d'équipes à 0
 		Interlocked.Exchange(ref _teamCounter, 0);
 		
+		// Remettre le compteur d'ID à 1 (état initial)
+		counter = 1;
+		
 		GD.Print("[INFO][MainServer] Le serveur a été réinitialisé.");
 	}
 }
