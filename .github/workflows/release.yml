@@ -67,15 +67,15 @@ jobs:
 
       # ──────────────────────────────────────────────
       # Patch macOS export for CI:
-      #   - Use built-in ad-hoc signing (works on Linux, avoids Gatekeeper "damaged" error)
+      #   - Disable Godot codesign (we sign with rcodesign post-export)
       #   - Disable notarization (requires Apple credentials)
       # ──────────────────────────────────────────────
       - name: 🍎 Patch macOS export preset for CI
         if: matrix.platform == 'macos'
         run: |
-          sed -i 's|codesign/codesign=.*|codesign/codesign=1|' export_presets.cfg
+          sed -i 's|codesign/codesign=.*|codesign/codesign=0|' export_presets.cfg
           sed -i 's|notarization/notarization=.*|notarization/notarization=0|' export_presets.cfg
-          echo "Set macOS ad-hoc signing & disabled notarization for CI build"
+          echo "Disabled Godot codesign & notarization (signing handled by rcodesign)"
 
       # ──────────────────────────────────────────────
       # Setup export templates & .NET
@@ -102,16 +102,32 @@ jobs:
           godot --headless --export-release "${{ matrix.preset }}" "${{ matrix.export_path }}"
 
       # ──────────────────────────────────────────────
+      # macOS: ad-hoc sign with rcodesign
+      # ──────────────────────────────────────────────
+      - name: 🍎 Sign macOS app bundle
+        if: matrix.platform == 'macos'
+        run: |
+          # Install rcodesign
+          RCODESIGN_VERSION="0.27.0"
+          curl -sL "https://github.com/indygreg/apple-codesign/releases/download/apple-codesign%2F${RCODESIGN_VERSION}/apple-codesign-${RCODESIGN_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+            | tar xz -C /usr/local/bin --strip-components=1 --wildcards '*/rcodesign'
+          chmod +x /usr/local/bin/rcodesign
+
+          # Unzip the Godot export, sign the .app, re-zip
+          cd build/macos
+          unzip -o "Pixel War.zip"
+          rcodesign sign --adhoc "Pixel War.app"
+          rm "Pixel War.zip"
+          zip -r -y "Pixel War.zip" "Pixel War.app"
+
+      # ──────────────────────────────────────────────
       # Package into ZIP for release
-      # macOS: Godot already exports a .zip with the .app bundle
-      #        (re-zipping would break Unix permissions & app structure)
-      # Windows/Linux: zip the export directory
       # ──────────────────────────────────────────────
       - name: 📦 Package artifact
         run: |
           ARTIFACT="pixel_war_${{ matrix.platform }}_${GITHUB_REF_NAME}-build.${GITHUB_RUN_NUMBER}"
           if [ "${{ matrix.platform }}" = "macos" ]; then
-            # Godot already produced a valid .zip — just rename it
+            # Already signed & zipped — just rename
             mv "${{ matrix.export_path }}" "${GITHUB_WORKSPACE}/${ARTIFACT}.zip"
           else
             EXPORT_DIR=$(dirname "${{ matrix.export_path }}")
