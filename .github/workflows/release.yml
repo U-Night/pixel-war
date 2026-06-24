@@ -66,15 +66,16 @@ jobs:
           grep -A5 '\[application\]' project.godot
 
       # ──────────────────────────────────────────────
-      # Disable macOS codesign & notarization for CI
-      # (Xcode tools are not available on Linux runners)
+      # Patch macOS export for CI:
+      #   - Use built-in ad-hoc signing (works on Linux, avoids Gatekeeper "damaged" error)
+      #   - Disable notarization (requires Apple credentials)
       # ──────────────────────────────────────────────
       - name: 🍎 Patch macOS export preset for CI
         if: matrix.platform == 'macos'
         run: |
-          sed -i 's|codesign/codesign=.*|codesign/codesign=0|' export_presets.cfg
+          sed -i 's|codesign/codesign=.*|codesign/codesign=1|' export_presets.cfg
           sed -i 's|notarization/notarization=.*|notarization/notarization=0|' export_presets.cfg
-          echo "Disabled macOS codesign & notarization for CI build"
+          echo "Set macOS ad-hoc signing & disabled notarization for CI build"
 
       # ──────────────────────────────────────────────
       # Setup export templates & .NET
@@ -88,9 +89,10 @@ jobs:
       - name: 🔧 Setup .NET & import project
         run: |
           mkdir -p build/windows build/macos build/linux
-          # Generate .godot cache, import resources & C# glue
-          # (C# compilation is handled by Godot during --export-release)
+          # Generate .godot cache & import resources
           timeout 120 godot --headless --import 2>&1 || true
+          # Build C# solution so .NET assemblies are available for export
+          godot --headless --build-solutions --quit 2>&1 || true
 
       # ──────────────────────────────────────────────
       # Export the game
