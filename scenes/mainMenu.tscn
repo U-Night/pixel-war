@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://qebts77cw6w" path="res://scripts/MainMenu.cs" id="1_dj72i"]
 [ext_resource type="Texture2D" uid="uid://dutfgl1mtvrg6" path="res://assets/background.png" id="1_qkhwq"]
-[ext_resource type="AudioStream" uid="uid://xf072jvi3yhi" path="res://assets/sounds/mj_human_nature.mp3" id="2_3d1i7"]
 [ext_resource type="FontFile" uid="uid://cmwgiyelh3k6h" path="res://assets/fonts/Audiowide-Regular.ttf" id="4_clbkb"]
 [ext_resource type="StyleBox" uid="uid://dnnnvpx34we65" path="res://assets/styles/button_normal.tres" id="4_ldpc3"]
 [ext_resource type="Texture2D" uid="uid://ck44uina8ivcp" path="res://assets/icons/space-shuttle.svg" id="5_clbkb"]
@@ -603,13 +602,6 @@ offset_right = 691.0
 offset_bottom = 196.0
 text = "PIXEL WAR"
 label_settings = SubResource("LabelSettings_48ign")
-
-[node name="bgMusicPlayer" type="AudioStreamPlayer" parent="." unique_id=58579569]
-stream = ExtResource("2_3d1i7")
-volume_db = -15.0
-autoplay = true
-bus = &"background_music"
-parameters/looping = true
 
 [node name="sfx" type="AudioStreamPlayer" parent="." unique_id=2134734087]
 

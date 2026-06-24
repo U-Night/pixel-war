@@ -28,6 +28,7 @@ buses/default_bus_layout="uid://cwx0a8v8v24ws"
 [autoload]
 
 MainServer="*uid://cnhyqe4bvjeqr"
+MusicManager="*uid://bdjep30ve2kfu"
 
 [display]
 
