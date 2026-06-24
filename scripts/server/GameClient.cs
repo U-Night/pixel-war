@@ -37,6 +37,9 @@ public class GameClient : IDisposable {
 	public PowerupType ActivePowerup { get; set; } = PowerupType.None;
 	public DateTime PowerupEndTime { get; set; }
 
+	// Flag Ping
+	public bool WantsPing { get; set; } = false;
+
 	public GameClient(TcpClient tcpClient, uint id) {
 		this.tcpClient = tcpClient;
 		this.RemoteEndPoint = tcpClient.Client.RemoteEndPoint as IPEndPoint;

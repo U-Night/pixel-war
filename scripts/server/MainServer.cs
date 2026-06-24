@@ -129,6 +129,14 @@ public partial class MainServer : Node {
 					await sender.ActivatePowerup();
 				}
 				break;
+			case PacketType.Message:
+				string msgData = packet.GetDataAsString();
+				if (msgData.Contains("\"ping\"")) {
+					sender.WantsPing = true;
+				} else {
+					GD.Print($"[INFO][MainServer] Message reçu de {{{sender.GetId()}}} : {msgData}");
+				}
+				break;
 			default:
 				GD.Print("[INFO][MainServer] Paquet non géré reçu : ", packet);
 				GD.Print($"[INFO][MainServer] {{{sender.GetId()}}} {packet.GetDataAsString()}");
@@ -212,6 +220,9 @@ public partial class MainServer : Node {
 		
 		// Remettre le compteur d'équipes à 0
 		Interlocked.Exchange(ref _teamCounter, 0);
+		
+		// Remettre le compteur d'ID à 1 (état initial)
+		counter = 1;
 		
 		GD.Print("[INFO][MainServer] Le serveur a été réinitialisé.");
 	}
