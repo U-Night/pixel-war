@@ -103,13 +103,21 @@ jobs:
 
       # ──────────────────────────────────────────────
       # Package into ZIP for release
+      # macOS: Godot already exports a .zip with the .app bundle
+      #        (re-zipping would break Unix permissions & app structure)
+      # Windows/Linux: zip the export directory
       # ──────────────────────────────────────────────
       - name: 📦 Package artifact
         run: |
           ARTIFACT="pixel_war_${{ matrix.platform }}_${GITHUB_REF_NAME}-build.${GITHUB_RUN_NUMBER}"
-          EXPORT_DIR=$(dirname "${{ matrix.export_path }}")
-          cd "${EXPORT_DIR}"
-          zip -r "${GITHUB_WORKSPACE}/${ARTIFACT}.zip" .
+          if [ "${{ matrix.platform }}" = "macos" ]; then
+            # Godot already produced a valid .zip — just rename it
+            mv "${{ matrix.export_path }}" "${GITHUB_WORKSPACE}/${ARTIFACT}.zip"
+          else
+            EXPORT_DIR=$(dirname "${{ matrix.export_path }}")
+            cd "${EXPORT_DIR}"
+            zip -r "${GITHUB_WORKSPACE}/${ARTIFACT}.zip" .
+          fi
 
       - name: ⬆️ Upload artifact
         uses: actions/upload-artifact@v4
