@@ -18,13 +18,13 @@ jobs:
       matrix:
         include:
           - preset: "Windows Desktop amd64"
-            artifact_name: pixel-war-windows-x64
+            platform: windows
             export_path: build/windows/Pixel War.exe
           - preset: "macOS"
-            artifact_name: pixel-war-macos
+            platform: macos
             export_path: build/macos/Pixel War.zip
           - preset: "Linux amd64"
-            artifact_name: pixel-war-linux-x64
+            platform: linux
             export_path: build/linux/Pixel War.x86_64
 
     container:
@@ -36,6 +36,14 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+
+      # ──────────────────────────────────────────────
+      # Install missing system dependencies
+      # ──────────────────────────────────────────────
+      - name: 🔧 Install system dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends fontconfig
 
       # ──────────────────────────────────────────────
       # Inject version & build number into project.godot
@@ -58,6 +66,17 @@ jobs:
           grep -A5 '\[application\]' project.godot
 
       # ──────────────────────────────────────────────
+      # Disable macOS codesign & notarization for CI
+      # (Xcode tools are not available on Linux runners)
+      # ──────────────────────────────────────────────
+      - name: 🍎 Patch macOS export preset for CI
+        if: matrix.platform == 'macos'
+        run: |
+          sed -i 's|codesign/codesign=.*|codesign/codesign=0|' export_presets.cfg
+          sed -i 's|notarization/notarization=.*|notarization/notarization=0|' export_presets.cfg
+          echo "Disabled macOS codesign & notarization for CI build"
+
+      # ──────────────────────────────────────────────
       # Setup export templates & .NET
       # ──────────────────────────────────────────────
       - name: 📦 Setup export templates
@@ -66,11 +85,14 @@ jobs:
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/* \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/ 2>/dev/null || true
 
-      - name: 🔧 Setup .NET project
+      - name: 🔧 Build .NET project
         run: |
           mkdir -p build/windows build/macos build/linux
-          # Let Godot import resources & build C# solution
+          # Generate the .godot/mono C# glue
           timeout 120 godot --headless --import 2>&1 || true
+          # Restore & build the C# solution
+          dotnet restore
+          dotnet build -c Release
 
       # ──────────────────────────────────────────────
       # Export the game
@@ -84,15 +106,16 @@ jobs:
       # ──────────────────────────────────────────────
       - name: 📦 Package artifact
         run: |
+          ARTIFACT="pixel_war_${{ matrix.platform }}_${GITHUB_REF_NAME}-build.${GITHUB_RUN_NUMBER}"
           EXPORT_DIR=$(dirname "${{ matrix.export_path }}")
           cd "${EXPORT_DIR}"
-          zip -r "${GITHUB_WORKSPACE}/${{ matrix.artifact_name }}.zip" .
+          zip -r "${GITHUB_WORKSPACE}/${ARTIFACT}.zip" .
 
       - name: ⬆️ Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.zip
+          name: pixel_war_${{ matrix.platform }}_${{ github.ref_name }}-build.${{ github.run_number }}
+          path: pixel_war_${{ matrix.platform }}_${{ github.ref_name }}-build.${{ github.run_number }}.zip
           retention-days: 5
 
   # ════════════════════════════════════════════════════
@@ -154,6 +177,6 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
-            artifacts/pixel-war-windows-x64/*.zip
-            artifacts/pixel-war-macos/*.zip
-            artifacts/pixel-war-linux-x64/*.zip
+            artifacts/pixel_war_windows_*/*.zip
+            artifacts/pixel_war_macos_*/*.zip
+            artifacts/pixel_war_linux_*/*.zip
