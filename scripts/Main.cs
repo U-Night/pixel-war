@@ -87,9 +87,5 @@ public partial class Main : Node2D {
 		gameManager.Name = "GameManager";
 		AddChild(gameManager);
 		gameManager.Init(mainServer, arenaGrid, timerLabel);
-
-		// Gestion de la musique:
-		MusicManager musicManager = GetNode<MusicManager>("/root/MusicManager");
-		musicManager.PlayMusic("waiting_room");
 	}
 }
