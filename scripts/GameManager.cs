@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// Gestion de la partie: logique de début, fin, éliminations, powerups, ...
+/// </summary>
 public partial class GameManager : Node {
     private MainServer _mainServer;
     private ArenaGrid _arenaGrid;

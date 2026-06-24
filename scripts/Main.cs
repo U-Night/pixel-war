@@ -2,6 +2,9 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// Classe reliée à la node principale: le jeu/la scène principale.
+/// </summary>
 public partial class Main : Node2D {
 	MainServer mainServer;
 	
@@ -33,6 +36,8 @@ public partial class Main : Node2D {
 			return;
 		}
 		
+		// On boucle sur tous les clients connectés et on les instancie
+		// dans des PlayerCharacer pour les afficher à l'écran.
 		foreach (KeyValuePair<uint, GameClient> cli in mainServer._clients) {
 			PlayerCharacter ply = playerScene.Instantiate<PlayerCharacter>();
 			ply.Init(cli.Value, (PlayerCharacter.TEAMS) cli.Value.TeamId, arenaGrid);

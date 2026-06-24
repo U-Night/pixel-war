@@ -68,7 +68,7 @@ public class Packet {
 		offset += 1;
 
 		// DATA_SIZE (4 bytes, int)
-		BitConverter.GetBytes(Data.Length).CopyTo(buffer, offset);
+		BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset), Data.Length);
 		offset += 4;
 
 		// DATA (M bytes)
@@ -99,7 +99,7 @@ public class Packet {
 		offset += 1;
 
 		// 3. DATA_SIZE (4 bytes, int)
-		int dataSize = BitConverter.ToInt32(buffer, offset);
+		int dataSize = BinaryPrimitives.ReadInt32LittleEndian(buffer.AsSpan(offset));
 		offset += 4;
 
 		// Sécurité : on s'assure que la taille n'est pas négative et qu'elle ne dépasse pas le buffer

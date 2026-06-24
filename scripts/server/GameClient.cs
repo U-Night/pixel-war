@@ -18,10 +18,12 @@ public class GameClient : IDisposable {
 	public IPEndPoint RemoteEndPoint { get; private set; }
 	private readonly uint id;
 	private readonly TcpMessageFramer tcpMessageFramer;
-	private bool _disposed; // Pour le Garbage Controller
+	private bool _disposed; 
 	public DateTime lastSeen { get; private set; } // Calculer le ping du client pour savoir s'il est encore vivant
 	
 	// Relatif aux coordonnées
+	// Important: Mutual Exclusion pour éviter les race conditions entre le thread de réception et le thread de jeu
+	public object _lock = new();
 	public volatile uint lastSequenceId = 0;
 	public volatile float dx = 0.0f;
 	public volatile float dy = 0.0f;
@@ -50,7 +52,7 @@ public class GameClient : IDisposable {
 		this.id = id;
 	}
 
-	public uint GetId() { return this.id; }
+	public uint GetId() { return id; }
 
 	public async Task<bool> PerformHandshake() {
 		// Première étape: Le serveur dit "PIXELWAR 1.0" (il s'annonce et sa version de protocole)
@@ -100,7 +102,6 @@ public class GameClient : IDisposable {
 		await tcpMessageFramer.SendAsync(serialized);
 	}
 
-	// ✅ Surcharge avec un PacketType explicite (utilisé pour TeamAssignment)
 	public async Task SendPacketAsync(PacketType type, String message) {
 		Packet packet = new Packet(type, message);
 		byte[] serialized = packet.Serialize();
@@ -120,10 +121,13 @@ public class GameClient : IDisposable {
 		return p;
 	}
 
-	public async Task HandleJoystickEvent(uint sequenceId, float x, float y) {
+	public void HandleJoystickEvent(uint sequenceId, float x, float y) {
 		if (sequenceId <= lastSequenceId) return; // On discard un sequence id plus récent que ce qu'on a déjà reçu.
-		dx = x;
-		dy = y;
+		lock (_lock) {
+			lastSequenceId = sequenceId;
+			dx = x;
+			dy = y;
+		}
 	}
 	
 	public void Ping() {

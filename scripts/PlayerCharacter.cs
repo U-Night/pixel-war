@@ -2,6 +2,10 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// Classe joueur, c'est la classe qui représente un joueur côté affichage.
+/// La partie serveur d'un joueur est dans la classe GameClient.
+/// </summary>
 public partial class PlayerCharacter : CharacterBody2D  {
 	public enum TEAMS : int {
 		BLUE   = 0,
@@ -66,9 +70,13 @@ public partial class PlayerCharacter : CharacterBody2D  {
 
 	public override void _PhysicsProcess(double delta) {
 		DateTime currentTime = DateTime.Now;
-		
-		float currentDx = GameClient.dx;
-		float currentDy = GameClient.dy;
+		float currentDx, currentDy;
+
+		lock (GameClient._lock) {
+			// On évite les race conditions en copiant les valeurs de dx et dy dans des variables locales
+			currentDx = GameClient.dx;
+			currentDy = GameClient.dy;
+		}
 
 		if (GameClient.WantsPing) {
 			GameClient.WantsPing = false;

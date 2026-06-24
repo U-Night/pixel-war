@@ -7,19 +7,20 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// ❌ L'enum Team a été retiré d'ici, il vit maintenant dans PlayerCharacter.cs
-
+/// <summary>
+/// MainServer est la classe principale pour le serveur du jeu.
+/// Elle gère les connexions TCP et UDP, le protocole de communication avec les clients, et la logique de jeu côté serveur.
+/// </summary>
 public partial class MainServer : Node {
 	private TcpListener listener;
 	private UdpClient udpClient;
 	private IPAddress _address;
 	private ushort _port;
 	private bool started = true; // enable graceful shutdown
-	private uint counter = 1;
+	private uint counter = 0;
 	public readonly ConcurrentDictionary<uint, GameClient> _clients = new();
 
-	// ✅ Compteur pour le round-robin. Interlocked.Increment garantit qu'en cas
-	// de connexions simultanées, deux clients ne reçoivent jamais le même slot.
+	// Compteur incrémental pour le round robin
 	private int _teamCounter = 0;
 	private bool _isServerRunning = false;
 
@@ -34,6 +35,7 @@ public partial class MainServer : Node {
 		_isServerRunning = true;
 		GD.Print("[NOTICE][MainServer] Starting Game Server on all interfaces, port 6967");
 		
+		// Gestion multithreading des serveurs TCP et UDP à l'aide du ThreadPool de C#.
 		StartAsync(IPAddress.Any, 6967).ContinueWith(task => {
 			if (task.IsFaulted) {	
 				GD.PrintErr($"[ERROR][MainServer] Failed to start TCP server: {task.Exception}");
@@ -46,11 +48,12 @@ public partial class MainServer : Node {
 			}
 		});
 	}
-
-	public void StartGameServer(IPAddress addr, ushort port) {
-		GD.Print($"[NOTICE][MainServer] Starting Game UDP Server on {addr}:{port}");
-	}
-
+	
+	/// <summary>
+	/// Démarrage du serveur TCP
+	/// </summary>
+	/// <param name="addr">L'adresse sur laquelle écouter</param>
+	/// <param name="port">Le port sur lequel écouter</param>
 	private async Task StartAsync(IPAddress addr, ushort port) {
 		listener = new(addr, port);
 		_address = addr;
@@ -60,27 +63,43 @@ public partial class MainServer : Node {
 		GD.Print($"[NOTICE][MainServer] Started Game Server. Bound to {this._address}:{this._port}");
 		while (started) {
 			TcpClient _client = await listener.AcceptTcpClientAsync();
-			_ = this.HandleClientAsync(_client, counter++);
+			_ = this.HandleClientAsync(_client, (uint)Interlocked.Increment(ref counter));
 		}
 	}
 
+	/// <summary>
+	/// Démarrage de l'écoute UDP
+	/// </summary>
+	/// <param name="addr">L'adresse sur laquelle écouter</param>
+	/// <param name="port">Le port sur lequel écouter</param>
 	private async Task StartUdpServerAsync(IPAddress addr, ushort port) {
 		udpClient = new UdpClient(new IPEndPoint(addr, port));
 		GD.Print($"[NOTICE][MainServer] Started Game UDP Server. Bound to {this._address}:{this._port}");
+		
 		while (started) {
 			UdpReceiveResult result = await udpClient.ReceiveAsync();
 			HandleUdpPacket(result);
 		}
 	}
-
+	
+	/// <summary>
+	/// Arrêt du serveur
+	/// </summary>
 	private async Task StopAsync() {
 		started = false;
 		listener.Stop();
+		udpClient.Close();
 		GD.Print("[NOTICE][MainServer] Stopped Game Server.");
 	}
 
+	/// <summary>
+	/// Gestion de l'arrivée d'un client en TCP
+	/// </summary>
+	/// <param name="client"></param>
+	/// <param name="id"></param>
 	private async Task HandleClientAsync(TcpClient client, uint id) {
 		GD.Print("[INFO][MainServer] Un client s'est connecté.");
+		// Notre objet gameClient.
 		GameClient gameClient = new(client, id);
 
 		try {
@@ -92,15 +111,12 @@ public partial class MainServer : Node {
 				return;
 			}
 
-			// ════════════════════════════════════════════════════════════════
-			// ✅ MODIFIÉ : on utilise PlayerCharacter.TEAMS au lieu de l'ancien Team
-			// ════════════════════════════════════════════════════════════════
+
 			PlayerCharacter.TEAMS team = (PlayerCharacter.TEAMS)((Interlocked.Increment(ref _teamCounter) - 1) % 4);
 			gameClient.TeamId = (int)team;
 
 			// Format : "TEAM_ASSIGNED:{0-3}"  ex: "TEAM_ASSIGNED:0" = BLUE
 			await gameClient.SendPacketAsync(PacketType.TeamAssignment, $"TEAM_ASSIGNED:{(int)team}");
-			// ════════════════════════════════════════════════════════════════
 
 			_clients.TryAdd(id, gameClient);
 			GD.Print($"[INFO][MainServer] Un client s'est connecété id: {id} → équipe {team}");
@@ -111,9 +127,14 @@ public partial class MainServer : Node {
 
 				await HandlePacketAsync(gameClient, packet);
 			}
-		} catch (ProtocolViolationException ex) {
+		}
+		catch (ProtocolViolationException ex) {
 			GD.PrintErr($"[ERROR][MainServer] Protocol violation error: {ex.Message}");
 			client.Close();
+		} finally {
+			_clients.TryRemove(id, out _);
+			gameClient.Dispose();
+			GD.Print($"[INFO][MainServer] Client {id} nettoyé et retiré.");
 		}
 	}
 
@@ -222,7 +243,7 @@ public partial class MainServer : Node {
 		Interlocked.Exchange(ref _teamCounter, 0);
 		
 		// Remettre le compteur d'ID à 1 (état initial)
-		counter = 1;
+		Interlocked.Exchange(ref counter, 0);
 		
 		GD.Print("[INFO][MainServer] Le serveur a été réinitialisé.");
 	}

@@ -1,6 +1,9 @@
 using Godot;
 using System;
 
+/// <summary>
+/// Classe gérant la map et la logique autour de la map
+/// </summary>
 public partial class ArenaGrid : TileMapLayer {
 	public int baseTileId { get; private set; } = 1;
 	public int mapHeight { get; private set; } = 34;
