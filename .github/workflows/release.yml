@@ -85,14 +85,12 @@ jobs:
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/* \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/ 2>/dev/null || true
 
-      - name: 🔧 Build .NET project
+      - name: 🔧 Setup .NET & import project
         run: |
           mkdir -p build/windows build/macos build/linux
-          # Generate the .godot/mono C# glue
+          # Generate .godot cache, import resources & C# glue
+          # (C# compilation is handled by Godot during --export-release)
           timeout 120 godot --headless --import 2>&1 || true
-          # Restore & build the C# solution
-          dotnet restore
-          dotnet build -c Release
 
       # ──────────────────────────────────────────────
       # Export the game
