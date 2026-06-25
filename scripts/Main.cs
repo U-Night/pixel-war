@@ -92,5 +92,9 @@ public partial class Main : Node2D {
 		gameManager.Name = "GameManager";
 		AddChild(gameManager);
 		gameManager.Init(mainServer, arenaGrid, timerLabel);
+
+		// On lance la musique du gameplay
+		MusicManager musicManager = GetNode<MusicManager>("/root/MusicManager");
+		musicManager.PlayMusic("color_splash_battle");
 	}
 }

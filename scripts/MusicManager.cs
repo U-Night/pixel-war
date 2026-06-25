@@ -8,7 +8,8 @@ public partial class MusicManager : Node {
 	private Dictionary<string, AudioStream> musicTracks = new() {
 		{"main_menu", GD.Load<AudioStream>("res://assets/sounds/mj_human_nature.mp3") },
 		{"waiting_room", GD.Load<AudioStream>("res://assets/sounds/waiting_room.ogg") },
-		//{"gameplay", GD.Load<AudioStream>("res://assets/sounds/gameplay.ogg") },
+		{"color_splash_battle", GD.Load<AudioStream>("res://assets/sounds/color_splash_battle.ogg") },
+		{"results", GD.Load<AudioStream>("res://assets/sounds/results.ogg") },
 	};
 	
 	public override void _Ready() {
