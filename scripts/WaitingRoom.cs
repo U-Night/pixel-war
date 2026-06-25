@@ -1,24 +1,22 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 public partial class WaitingRoom : Control {
 	MainServer mainServer;
 
-	// ════════════════════════════════════════════════════════════════
-	// ✅ Références vers les 4 panels d'équipe (déjà présents dans la scène)
-	// Typés "Control" plutôt que "Panel" pour rester compatible peu importe
-	// si c'est un Panel ou un ColorRect dans le .tscn
-	// ════════════════════════════════════════════════════════════════
 	private Control panelBlue, panelRed, panelGreen, panelYellow;
+	private Label _dataLabel;
+	private string _localIp;
 
-	// Labels créés dynamiquement (un par équipe) pour afficher les ids
 	private Label[] teamLabels = new Label[4]; // index = TeamId (0=Blue, 1=Red, 2=Green, 3=Yellow)
 
 	private static readonly string[] TeamNames = { "Équipe Bleue", "Équipe Rouge", "Équipe Verte", "Équipe Jaune" };
 
-	// Refresh périodique (pas besoin d'un Timer dans la scène, on accumule le delta)
 	private double _refreshTimer = 0.0;
 	private const double REFRESH_INTERVAL = 0.5; // toutes les 500ms
 
@@ -27,6 +25,9 @@ public partial class WaitingRoom : Control {
 		mainServer = GetNode<MainServer>("/root/MainServer");
 
 		await Task.Run(() => mainServer.StartServer());
+
+		_dataLabel = GetNode<Label>("DataLabel");
+		_localIp = GetLocalIpAddress();
 
 		// ════════════════════════════════════════════════════════════════
 		// ✅ Récupération des panels existants + création des labels d'ids
@@ -79,6 +80,7 @@ public partial class WaitingRoom : Control {
 		_refreshTimer = 0.0;
 
 		RefreshTeamLabels();
+		RefreshDataLabel();
 	}
 
 	// ════════════════════════════════════════════════════════════════
@@ -107,8 +109,22 @@ public partial class WaitingRoom : Control {
 		}
 	}
 
+	private void RefreshDataLabel() {
+		if (_dataLabel == null) return;
+		_dataLabel.Text = $"Joueurs connectés: {mainServer._clients.Count} | Adresse: {_localIp}";
+	}
+
+	private static string GetLocalIpAddress() {
+		try {
+			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+			socket.Connect("8.8.8.8", 80);
+			if (socket.LocalEndPoint is IPEndPoint endPoint)
+				return endPoint.Address.ToString();
+		} catch { }
+		return "127.0.0.1";
+	}
+
 	public void _OnContinueButtonPressed() {
-		GD.Print("Ok mec");
 		if (mainServer._clients.IsEmpty) return;
 
 		GetTree().ChangeSceneToFile("res://scenes/main.tscn");
