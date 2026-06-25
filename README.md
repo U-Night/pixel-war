@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/U-Night/pixe-war/releases/latest"><img src="https://img.shields.io/badge/Télécharger-Dernière%20Release-brightgreen?style=for-the-badge&logo=github" alt="Dernière Release"/></a>
+  <a href="https://github.com/U-Night/pixel-war/releases/latest"><img src="https://img.shields.io/badge/Télécharger-Dernière%20Release-brightgreen?style=for-the-badge&logo=github" alt="Dernière Release"/></a>
   <img src="https://img.shields.io/badge/Godot-4.6-blue?style=for-the-badge&logo=godotengine" alt="Godot 4.6"/>
   <img src="https://img.shields.io/badge/C%23-.NET%2010-512BD4?style=for-the-badge&logo=dotnet" alt=".NET 10"/>
 </p>
@@ -85,7 +85,7 @@ Les joueurs doivent **télécharger la manette virtuelle** sur leur téléphone 
 
 Téléchargez la dernière version compilée pour votre plateforme depuis les **Releases GitHub** :
 
-👉 **[Dernière Release](https://github.com/U-Night/pixe-war/releases/latest)**
+👉 **[Dernière Release](https://github.com/U-Night/pixel-war/releases/latest)**
 
 Des builds sont disponibles pour **Windows**, **macOS** et **Linux**.
 
@@ -102,7 +102,7 @@ Des builds sont disponibles pour **Windows**, **macOS** et **Linux**.
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/U-Night/pixe-war.git
+git clone https://github.com/U-Night/pixel-war.git
 cd pixel-war
 
 # Ouvrir le projet dans Godot
