@@ -10,8 +10,8 @@ public partial class MainMenu : Control {
 
 		// On récupère le numéro de version
 		VersionManager versionManager = GetNode<VersionManager>("/root/VersionManager");
-		Label versionLabel = GetNode<Label>("VersionLabel");
-		versionLabel.Text = versionManager.FullVersion;
+		Label versionLabel = GetNode<Label>("MarginContainer/HBoxContainer/VersionLabel");
+		versionLabel.Text = "Pixel War " + versionManager.FullVersion + ". © " + versionManager.YearOfLicenseValidity + " U-Night & Gaya BOUNDER. All rights reserved.";
 	}
 
 	public void _on_play_button_pressed() {

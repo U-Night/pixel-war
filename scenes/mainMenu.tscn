@@ -8,6 +8,7 @@
 [ext_resource type="StyleBox" uid="uid://dnvndbeqgmcmp" path="res://assets/styles/button_pressed.tres" id="5_y35fp"]
 [ext_resource type="StyleBox" uid="uid://xnn66g8h78rf" path="res://assets/styles/button_hovered.tres" id="6_dj72i"]
 [ext_resource type="Texture2D" uid="uid://btobnf57t3kbe" path="res://assets/icons/leave.svg" id="6_ldpc3"]
+[ext_resource type="Texture2D" uid="uid://bjaq0r1e4b7vw" path="res://assets/icons/u-night_white_icon_small.png" id="9_6b2wv"]
 [ext_resource type="FontFile" uid="uid://c5w4bmxvtvajr" path="res://assets/fonts/Inter-VariableFont_opsz,wght.ttf" id="9_dj72i"]
 
 [sub_resource type="Image" id="Image_qkhwq"]
@@ -657,20 +658,34 @@ icon = ExtResource("6_ldpc3")
 alignment = 0
 expand_icon = true
 
-[node name="VersionLabel" type="Label" parent="." unique_id=866772356]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1608129495]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -197.0
-offset_top = -31.0
-offset_right = -8.0
-offset_bottom = -8.0
+offset_left = -40.0
+offset_top = -40.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Version: 1.2.3 (build 123)"
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1493923844]
+layout_mode = 2
+
+[node name="u-night-icon" type="TextureRect" parent="MarginContainer/HBoxContainer" unique_id=440394962]
+layout_mode = 2
+texture = ExtResource("9_6b2wv")
+expand_mode = 3
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer" unique_id=416065414]
+custom_minimum_size = Vector2(7, 0)
+layout_mode = 2
+
+[node name="VersionLabel" type="Label" parent="MarginContainer/HBoxContainer" unique_id=866772356]
+layout_mode = 2
 label_settings = SubResource("LabelSettings_6b2wv")
 horizontal_alignment = 2
 vertical_alignment = 2
