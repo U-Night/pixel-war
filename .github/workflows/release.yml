@@ -116,7 +116,7 @@ jobs:
           # Unzip the Godot export, sign the .app, re-zip
           cd build/macos
           unzip -o "Pixel War.zip"
-          rcodesign sign --adhoc "Pixel War.app"
+          rcodesign sign "Pixel War.app"
           rm "Pixel War.zip"
           zip -r -y "Pixel War.zip" "Pixel War.app"
 
