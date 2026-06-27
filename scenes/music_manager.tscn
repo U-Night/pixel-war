@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bdjep30ve2kfu"]
 
 [ext_resource type="Script" uid="uid://cnqykhkef76eh" path="res://scripts/MusicManager.cs" id="1_hetdf"]
-[ext_resource type="AudioStream" uid="uid://xf072jvi3yhi" path="res://assets/sounds/mj_human_nature.mp3" id="2_jd6i5"]
+[ext_resource type="AudioStream" uid="uid://c38c6s365duqm" path="res://assets/sounds/mj_human_nature.mp3" id="2_jd6i5"]
 
 [node name="MusicManager" type="Node" unique_id=107468368]
 script = ExtResource("1_hetdf")

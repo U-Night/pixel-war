@@ -20,11 +20,15 @@ public partial class WaitingRoom : Control {
 	private double _refreshTimer = 0.0;
 	private const double REFRESH_INTERVAL = 0.5; // toutes les 500ms
 
+	private MusicManager musicManager;
+	private int previousClientsCount_SfxCheck;
+
 	public override async void _Ready() {
 		GD.Print("[INFO][WaitingRoom] Waiting Room loaded. Starting Main Server...");
 		mainServer = GetNode<MainServer>("/root/MainServer");
 
 		await Task.Run(() => mainServer.StartServer());
+		previousClientsCount_SfxCheck = mainServer._clients.Count;
 
 		_dataLabel = GetNode<Label>("DataLabel");
 		_localIp = GetLocalIpAddress();
@@ -41,6 +45,8 @@ public partial class WaitingRoom : Control {
 		teamLabels[1] = CreateTeamLabel(panelRed, TeamNames[1]);
 		teamLabels[2] = CreateTeamLabel(panelGreen, TeamNames[2]);
 		teamLabels[3] = CreateTeamLabel(panelYellow, TeamNames[3]);
+
+		musicManager = GetNode<MusicManager>("/root/MusicManager");
 	}
 
 	// ════════════════════════════════════════════════════════════════
@@ -81,6 +87,7 @@ public partial class WaitingRoom : Control {
 
 		RefreshTeamLabels();
 		RefreshDataLabel();
+		PlayPlayerJoinedSfx();
 	}
 
 	// ════════════════════════════════════════════════════════════════
@@ -110,8 +117,19 @@ public partial class WaitingRoom : Control {
 	}
 
 	private void RefreshDataLabel() {
+
 		if (_dataLabel == null) return;
-		_dataLabel.Text = $"Joueurs connectés: {mainServer._clients.Count} | Adresse: {_localIp}";
+		_dataLabel.Text = $"Joueurs connectés : {mainServer._clients.Count} | Adresse : {_localIp}";
+	}
+
+	private void PlayPlayerJoinedSfx() {
+		if (mainServer._clients.Count > previousClientsCount_SfxCheck) {
+			musicManager.PlaySfx_NoInterrupt("player_joined");
+		}
+		if (mainServer._clients.Count < previousClientsCount_SfxCheck) {
+			musicManager.PlaySfx_NoInterrupt("player_left");
+		}
+		previousClientsCount_SfxCheck = mainServer._clients.Count;
 	}
 
 	private static string GetLocalIpAddress() {
@@ -124,9 +142,17 @@ public partial class WaitingRoom : Control {
 		return "127.0.0.1";
 	}
 
-	public void _OnContinueButtonPressed() {
-		if (mainServer._clients.IsEmpty) return;
+	public void _OnContinueButtonMouseEntered() {
+		musicManager.PlaySfx_NoInterrupt("button_hover");
+	}
 
+	public void _OnContinueButtonPressed() {
+		if (mainServer._clients.IsEmpty) {
+			musicManager.PlaySfx_NoInterrupt("unable_to_perform_action");
+			return;
+		}
+
+		musicManager.PlaySfx_NoInterrupt("button_click");
 		GetTree().ChangeSceneToFile("res://scenes/main.tscn");
 	}
 }
