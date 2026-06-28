@@ -21,7 +21,7 @@ public partial class GameOver : Control {
 		{ 3, new Color(1f, 1f, 0.2f) }
 	};
 
-	public void Init(ArenaGrid arenaGrid, List<int> winningTeams) {
+	public async void Init(ArenaGrid arenaGrid, List<int> winningTeams) {
 		_arenaGrid = arenaGrid;
 		_winningTeams = winningTeams;
 
@@ -138,7 +138,13 @@ public partial class GameOver : Control {
 		// ═══ Attribution du MusicManager ═══
 		musicManager = GetNodeOrNull<MusicManager>("/root/MusicManager");
 
+		// Après 5 secondes de répit, la musique des résultats se joue et les interactions sont activées
+		await ToSignal(GetTree().CreateTimer(5.0f), SceneTreeTimer.SignalName.Timeout);
+		if (musicManager != null) {
+			musicManager.PlayMusic("results");
+		}
 	}
+
 
 	private void OnButtonMouseEntered() {
 		musicManager.PlaySfx_NoInterrupt("button_hover");
